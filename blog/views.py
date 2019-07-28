@@ -1,5 +1,5 @@
 from rest_framework.response import Response
-from rest_framework.views import APIView
+from rest_framework import viewsets
 
 from .models import Post
 from django.utils import timezone
@@ -49,33 +49,19 @@ def post_edit(request, pk):
     return render(request, 'blog/post_edit.html', {'form': form})
 
 
-class PostsView(APIView):
-    def get(self, request):
-        posts = Post.objects.all()
-        serializer = PostSerializer(posts, many=True)
-        return Response({"posts": serializer.data})
+class PostsView(viewsets.ViewSet):
+    def list(self, request):
+        queryset = Post.objects.all()
+        serializer = PostSerializer(queryset, many=True)
+        return Response(serializer.data)
 
-    def post(self, request):
-        post = request.data.get('post')
-        serializer = PostSerializer(data=post)
-        if serializer.is_valid(raise_exception=True):
-            post_saved = serializer.save()
-        return Response({"success": "Post '{}' created successfully".format(post_saved.title)})
+    def retrieve(self, request, pk=None):
+        queryset = Post.objects.all()
+        user = get_object_or_404(queryset, pk=pk)
+        serializer = PostSerializer(user)
+        return Response(serializer.data)
 
-    def put(self, request, pk):
-        saved_article = get_object_or_404(Post.objects.all(), pk=pk)
-        data = request.data.get('post')
-        serializer = PostSerializer(instance=saved_article, data=data, partial=True)
-        if serializer.is_valid(raise_exception=True):
-            post_saved = serializer.save()
-        return Response({
-            "success": "Article '{}' updated successfully".format(post_saved.title)
-        })
 
-    def delete(self, request, pk):
-        # Get object with this pk
-        post = get_object_or_404(Post.objects.all(), pk=pk)
-        post.delete()
-        return Response({
-            "message": "Article with id `{}` has been deleted.".format(pk)
-        }, status=204)
+class PostsViewSet(viewsets.ModelViewSet):
+    serializer_class = PostSerializer
+    queryset = Post.objects.all()
