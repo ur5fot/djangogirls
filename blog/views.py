@@ -49,19 +49,6 @@ def post_edit(request, pk):
     return render(request, 'blog/post_edit.html', {'form': form})
 
 
-class PostsView(viewsets.ViewSet):
-    def list(self, request):
-        queryset = Post.objects.all()
-        serializer = PostSerializer(queryset, many=True)
-        return Response(serializer.data)
-
-    def retrieve(self, request, pk=None):
-        queryset = Post.objects.all()
-        user = get_object_or_404(queryset, pk=pk)
-        serializer = PostSerializer(user)
-        return Response(serializer.data)
-
-
 class PostsViewSet(viewsets.ModelViewSet):
     serializer_class = PostSerializer
     queryset = Post.objects.all()
