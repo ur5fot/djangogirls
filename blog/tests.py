@@ -1,24 +1,58 @@
-from django.test import TestCase, client
-from django.urls import include, path, reverse
-from rest_framework import status
-from rest_framework.test import APITestCase, URLPatternsTestCase, APIRequestFactory
 from django.conf.urls import url
+from django.urls import reverse
+from rest_framework import status
+from rest_framework.test import APITestCase
 from rest_framework.utils import json
+
+from blog.models import Post
 
 
 class PostsTests(APITestCase):
-    urlpatterns = [
-        path('', include('blog.urls')),
-    ]
 
     def test_create_post(self):
-        data = {
-            "title": "Title: 1 test  test test test",
-            "text": "Давно выяснено, что при оценке дизайна и композиции читаемый текст мешает сосредоточиться. Lorem Ipsum используют потому, что тот обеспечивает более или менее стандартное заполнение шаблона, а также реальное распределение букв и пробелов в абзацах, которое не получается при простой дубликации \"Здесь ваш текст.. Здесь ваш текст.. Здесь ваш текст..\" Многие программы электронной вёрстки и редакторы HTML используют Lorem Ipsum в качестве текста по умолчанию, так что поиск по ключевым словам \"lorem ipsum\" сразу показывает, как много веб-страниц всё ещё дожидаются своего настоящего рождения. За прошедшие годы текст Lorem Ipsum получил много версий. Некоторые версии появились по ошибке, некоторые - намеренно (например, юмористические варианты).",
-            "created_date": "2019-07-27 14:19:25+00:00",
-            "published_date": "2019-07-27 14:21:55+00:00",
+        post = {
+            'title': "Title: 1",
+            "text": "xcdascas",
+            "created_date": "2019-07-29 00:00",
+            "published_date": "2019-07-29 00:00",
             "author_id": 1
         }
-        response = self.client.post(reverse('api_post-list'), json.dumps(data), format='json')
-        print(response)
+
+        response = self.client.post(reverse('post-list'), post, format='json')
+        # response = self.client.post(reverse('post-list'), post,  content_type='application/json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Post.objects.get().title, 'Title: 1')
+
+    def test_update_post(self):
+        Post.objects.create(
+            title='Title: 1',
+            text='Давно выяснено, что при оценке дизайна и композиции ч',
+            created_date='2019-07-29 00:00',
+            published_date='2019-07-29 00:00',
+            author_id=1
+        )
+
+        updated_post = {
+            'title': 'updated_post Title: 1',
+            'text': 'Давно выяснено, что при оценке дизайна и композиции читаемый текст мешает сосредоточиться.',
+            'created_date': '2019-07-29 00:00',
+            'published_date': '2019-07-29 00:00',
+            'author_id': 1
+        }
+
+        response = self.client.put(reverse('post-detail', kwargs={'pk': Post.objects.get().pk}),
+                                   updated_post, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(Post.objects.get().title, 'updated_post Title: 1')
+
+    def test_delete_post(self):
+        Post.objects.create(
+            title='Title: 1',
+            text='Давно выяснено, что при оценке дизайна и композиции ч',
+            created_date='2019-07-29 00:00:00',
+            published_date='2019-07-29 00:00:00',
+            author_id=1
+        )
+        response = self.client.delete(reverse('post-detail', kwargs={'pk': Post.objects.get().pk}))
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
